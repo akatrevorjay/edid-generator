@@ -1,0 +1,12 @@
+Modeline "3840x2160" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +hsync +vsync
+Modeline "test_hsync" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +hsync
+Modeline "test_vsync" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +vsync
+
+# special parameters can specify things such as DPI and such, look in script for info.
+Modeline "test_ratio43" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 ratio=4:3
+
+# Comments are ignored as well as lines that just don't seem like modelines.
+Section "Monitor"
+	Identifier "Fake"
+	Modeline "test_xorg" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +vsync
+EndSection
