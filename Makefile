@@ -10,22 +10,28 @@ CODE	:= $(patsubst %.S, %.c, $(SOURCES))
 all:	$(BIN) $(IHEX) $(CODE)
 
 clean:
-	rm -f *.o *.bin.ihex *.bin *.c
+	rm -f *.o *.crc *.bin *.bin.ihex *.c
 
 %.o:	%.S
-	cc -c $^
+	cc -c -DCRC="0x00" -o $@ $^
 
-%.bin:	%.o
+%.bin.nocrc:	%.o
 	objcopy -Obinary $^ $@
 
-%.bin.ihex:	%.o
+%.crc:	%.bin.nocrc
+	cat $^ | edid-decode \
+		| sed -ne 's/^Checksum: 0x\w\+ (should be \(0x\w\+\))$$/\1/p' >$@
+
+%.p:	%.crc %.S
+	cc -c -DCRC="$$(cat $*.crc)" -o $@ $*.S
+
+%.bin:	%.p
+	objcopy -Obinary $^ $@
+
+%.bin.ihex:	%.p
 	objcopy -Oihex $^ $@
 	dos2unix $@ 2>/dev/null
 
 %.c:	%.bin
 	@echo "{" >$@; hexdump -f hex $^ >>$@; echo "};" >>$@
-
-%.crc: %.bin
-	./compute-crc $^ >$@
-	echo $(MAKE) $^
 
