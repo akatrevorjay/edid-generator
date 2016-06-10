@@ -52,12 +52,12 @@ Why?
 Many monitors and TVs (both high and low end) provide invalid EDID data. After dealing with this for years, I wanted to
 automate this process.
 
-The final straw was when I bought a Sceptre 4K tv for ~$225 and ran into a long series of hurdles to get it to operate
+The final straw was when I bought a cheap Sceptre 4K tv at a rather affordable ~$225 and ran into a long series of hurdles to get it to operate
 as expected at `3840x2160@60`. After doing this enough times, I had to automate it or I was going to go crazy.
 
 I used this to quickly iterate while troubleshhooting, finally it's all working from KMS all the way down to X!
 
-(Via `drm_kms_helper.edid_firmware=DP-1:edid/blah.bin``if you're interested. I'm using radeon + intel, with nvidia you
+(Via `drm_kms_helper.edid_firmware=DP-1:edid/blah.bin` if you're interested. I'm using radeon + intel, with nvidia you
 have to specify it in `xorg.conf`/`xorg.conf.d` as they don't yet support KMS for the fb console yet; their beta
 drivers, 367 at the time of writing, only support using KMS for the xorg server.)
 
