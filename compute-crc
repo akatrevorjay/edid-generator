@@ -1,0 +1,3 @@
+#!/bin/sh
+# A tad gross, but hey, it works.
+cat "$bin_fn" | edid-decode | sed -ne 's/^Checksum: 0x\w\+ (should be \(0x\w\+\))$/\1/p'

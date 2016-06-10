@@ -1,0 +1,148 @@
+#!/bin/zsh
+setopt errexit errreturn
+setopt sourcetrace verbose
+setopt xtrace
+
+
+munge-x11-modeline() {
+	local args=() arg
+	for arg in "$@"; do
+		[[ "$arg" != \"*\" ]] || arg="${arg:1:-1}"
+		args+=("$arg")
+	done
+	set -- ${(@)args}
+
+	[[ "$1" != "Modeline" ]] || shift 1
+	name="$1" pixel_clock_mhz="$2"; shift 2
+	hdisp="$1" hsyncstart="$2" hsyncend="$3" htotal="$4"; shift 4
+	vdisp="$1" vsyncstart="$2" vsyncend="$3" vtotal="$4"; shift 4
+
+	fn="${name}.S"
+	bin_fn="${name}.bin"
+
+	hsync_polarity=0
+	vsync_polarity=0
+	ratio="16:9"  # todo calc
+	dpi="96"
+	edid_version="1.3"
+	vfreq_hz="60"
+	crc="0x00"
+
+	local arg
+	for arg in "$@"; do
+		case "${(L)arg}" in
+			*hsync) [[ "${arg:1:1}" == "-" ]] || hsync_polarity=1 ;;
+			*vsync) [[ "${arg:1:1}" == "-" ]] || vsync_polarity=1 ;;
+			ratio=*|xy_ratio=*) ratio="${arg#*=}" ;;
+			dpi=*) dpi="${arg#*=}" ;;
+			edid_version=*) edid_version="${arg#*=}" ;;
+			vfreq=*|vfreq_hz=*) vfreq_hz="${arg#*=}" ;;
+			crc=*) crc="${arg#*=}" ;;
+			*) echo "Unknown modeline option passed: $arg" >&2 ;;
+		esac
+	done
+}
+
+gen-S-defines() {
+	[[ $# -eq 0 ]] || munge-x11-modeline "$@"
+	local -i pixel_clock_khz=$((pixel_clock_mhz * 1000))
+
+	defines=(
+		TIMING_NAME "${(qqq)name}"
+
+	    CLOCK   "$pixel_clock_khz"
+	    XPIX    "$hdisp"
+	    XBLANK  "$((htotal - hdisp))"
+	    XOFFSET "$((hsyncstart - hdisp))"
+	    XPULSE  "$((hsyncend - hsyncstart))"
+	   
+	    YPIX    "$vdisp"
+	    YBLANK  "$((vtotal - vdisp))"
+	    YOFFSET "(63+$((vsyncstart - vdisp)))"
+	    YPULSE  "(63+$((vsyncend - vsyncstart)))"
+
+	    VERSION "${edid_version%%.*}"
+	    REVISION "${edid_version#*.}"
+
+	    XY_RATIO "XY_RATIO_${(U)ratio//:/_}"
+	    DPI "$dpi"
+	    VFREQ "$vfreq_hz"
+	    HSYNC_POL "$hsync_polarity"
+	    VSYNC_POL "$vsync_polarity"
+	    CRC "$crc"
+	)
+}
+
+template-S() {
+	local -a lines=("/* $name: $* */")
+	local k
+	for k in ${(k)defines}; do
+		lines+=("#define $k ${defines[$k]}")
+	done
+	lines+=('#include "edid.S"')
+
+	echo "${(j:\n:)lines[@]}" | tee "$fn"
+	echo "Wrote $fn" >&2
+}
+
+compile() {
+	rm -fv $bin_fn
+	echo "Compiling $bin_fn" >&2
+	local i=0
+	while true; do
+		let i++ || :
+		make >/dev/null 2>&1 || :
+		! test -f "$bin_fn" || break
+		[[ $i -lt 100 ]] || (echo "Failed to compute checksum for $bin_fn" >&2; exit 1)
+	done
+	echo "Compiled $bin_fn in $i iterations" >&2
+}
+
+modeline2edid() {
+	local name
+	local -A defines
+	gen-S-defines "$@"
+	[[ -n "$name" ]] || (echo "Didn't get a name? The hell?" >&2 && exit 1)
+
+	# Template and compile
+	template-S "$@"
+	compile
+
+	# Fix CRC
+	local crc=$(${0:h}/compute-crc)
+	# we're done if we don't have a crc to fix
+	[[ -n "$crc" ]] || return
+
+	# Re-template and compile with proper CRC
+	defines[CRC]=$crc template-S "$@"
+	compile
+}
+
+
+main() {
+	zmodload -i zsh/zutil
+
+	# support single argument filename
+	[[ -z $1 || $1 = -* ]] || set -- -f "$@"
+
+	local o_file=()
+	zparseopts -K -D -E -- f:o_file
+	local f=${o_file[-1]}
+
+	case $f in
+		-|) f="/dev/stdin" ;;
+	esac
+
+	if [ -z "$f" ]; then
+		echo "Usage:" >&2
+		echo "$0 [-f] FILENAME		Parse modelines out of a file (eg xorg.conf) or '-' for stdin." >&2
+		exit 1
+	fi
+
+	echo "Searching for unicorns in $f" >&2
+	while read; do
+		echo "-- Found a unicorn: $REPLY" >&2
+		modeline2edid $=REPLY
+	done < $f
+}
+
