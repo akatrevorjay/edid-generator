@@ -1,4 +1,4 @@
-/* 3840x2160: Modeline "3840x2160" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +hsync +vsync */
+/* 3840x2160: Modeline "3840x2160" 594.00 3840 4016 4104 4400 2160 2168 2178 2250 +hsync +vsync */
 #define HSYNC_POL 1
 #define VSYNC_POL 1
 #define YPULSE (63+10)

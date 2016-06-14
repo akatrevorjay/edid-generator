@@ -10,3 +10,23 @@ Section "Monitor"
 	Identifier "Fake"
 	Modeline "test_xorg" 594.000 3840 4016 4104 4400 2160 2168 2178 2250 +vsync
 EndSection
+
+##
+## Apple Thunderbolt Display
+##
+
+Modeline "1280x720" 74.50  1280 1344 1472 1664  720 723 728 748 -hsync +vsync
+Modeline "2560x1440" 241.50  2560 2608 2640 2720  1440 1443 1448 1481 +hsync -vsync
+
+##
+## Sceptre U435CV-UMC @ 60hz (needed or else it will stay at 30hz due to timing being out of bounds)
+##
+
+Modeline "3840x2160" 594.00  3840 4016 4104 4400  2160 2168 2178 2250 +hsync +vsync
+
+##
+## Retina MacbookPro (all)
+## Not needed at all. Just an example.
+##
+
+Modeline "2880x1800" 337.75 2880 2928 2960 3040 1800 1803 1809 1852 +hsync -vsync
