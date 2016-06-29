@@ -33,7 +33,6 @@
 *.su
 
 *.c
-*.bin
 *.ihex
 *.o.pre
 *.o.post
