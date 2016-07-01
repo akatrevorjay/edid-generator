@@ -12,7 +12,7 @@ Requirements
 ------------
 
 ```
-sudo apt install zsh edid-decode automake
+sudo apt install zsh edid-decode automake dos2unix
 ```
 
 Usage
