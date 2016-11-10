@@ -1,4 +1,6 @@
 #!/bin/zsh
+emulate -L zsh
+
 setopt errexit errreturn
 #setopt xtrace
 
@@ -43,7 +45,7 @@ template-S() {
 		XBLANK  "$((htotal - hdisp))"
 		XOFFSET "$((hsyncstart - hdisp))"
 		XPULSE  "$((hsyncend - hsyncstart))"
-	   
+
 		YPIX    "$vdisp"
 		YBLANK  "$((vtotal - vdisp))"
 		YOFFSET "(63+$((vsyncstart - vdisp)))"
@@ -59,7 +61,7 @@ template-S() {
 		VSYNC_POL "$vsync_polarity"
 	)
 
-	local -a lines=("/* $name: $REPLY */")
+	local -a lines=("/\* $name: $REPLY \*/")
 	local k
 	for k in ${(k)defines}; do
 		lines+=("#define $k ${defines[$k]}")
