@@ -61,7 +61,7 @@ template-S() {
 		VSYNC_POL "$vsync_polarity"
 	)
 
-	local -a lines=("/\* $name: $REPLY \*/")
+	local -a lines=('/* '"$name: $REPLY"' */')
 	local k
 	for k in ${(k)defines}; do
 		lines+=("#define $k ${defines[$k]}")
