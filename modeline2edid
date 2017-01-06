@@ -38,33 +38,31 @@ template-S() {
 
 	local -A defines
 	defines=(
-		TIMING_NAME "${(qqq)name}"
-
-		CLOCK   "$pixel_clock_khz"
-		XPIX    "$hdisp"
-		XBLANK  "$((htotal - hdisp))"
-		XOFFSET "$((hsyncstart - hdisp))"
-		XPULSE  "$((hsyncend - hsyncstart))"
-
-		YPIX    "$vdisp"
-		YBLANK  "$((vtotal - vdisp))"
-		YOFFSET "(63+$((vsyncstart - vdisp)))"
-		YPULSE  "(63+$((vsyncend - vsyncstart)))"
-
 		VERSION "${edid_version%%.*}"
 		REVISION "${edid_version#*.}"
-
+		CLOCK   "$pixel_clock_khz"
+		XPIX    "$hdisp"
+		YPIX    "$vdisp"
 		XY_RATIO "XY_RATIO_${(U)ratio//:/_}"
+		XBLANK  "$((htotal - hdisp))"
+		YBLANK  "$((vtotal - vdisp))"
+		XOFFSET "$((hsyncstart - hdisp))"
+		XPULSE  "$((hsyncend - hsyncstart))"
+		YOFFSET "(63+$((vsyncstart - vdisp)))"
+		YPULSE  "(63+$((vsyncend - vsyncstart)))"
 		DPI "$dpi"
 		VFREQ "$vfreq_hz"
+                TIMING_NAME "${(qqq)name}"
 		HSYNC_POL "$hsync_polarity"
 		VSYNC_POL "$vsync_polarity"
 	)
 
-	local -a lines=('/* '"$name: $REPLY"' */')
+        lines=('/* '"$name: $REPLY"' */') # removed local -a
 	local k
-	for k in ${(k)defines}; do
+	for k in "${(@k)defines}"; do
 		lines+=("#define $k ${defines[$k]}")
+                #echo ${defines[TIMING_NAME]}
+                #echo "#define $k ${defines[$k]}"
 	done
 	lines+=('#include "edid.S"')
 
