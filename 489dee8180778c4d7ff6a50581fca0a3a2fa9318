@@ -1,0 +1,1 @@
+{"timestamp":"1472625463","reviewRef":"refs/pull/1/head","targetRef":"refs/heads/master","requester":"kenni","description":"Update README.md\n\nAdd dos2unix as a builddep, as compiling will otherwise fail with the error message \"Makefile:32: recipe for target 'x.bin.ihex' failed\".\n","baseCommit":"eaf9ff9f74d9872fb4c34ca0434b588914621dfc"}
