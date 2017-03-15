@@ -57,12 +57,11 @@ template-S() {
 		VSYNC_POL "$vsync_polarity"
 	)
 
-        lines=('/* '"$name: $REPLY"' */') # removed local -a
+        local lines=('/* '"$name: $REPLY"' */') # removed -a option
 	local k
 	for k in "${(@k)defines}"; do
 		lines+=("#define $k ${defines[$k]}")
-                #echo ${defines[TIMING_NAME]}
-                #echo "#define $k ${defines[$k]}"
+
 	done
 	lines+=('#include "edid.S"')
 
