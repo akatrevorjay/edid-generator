@@ -20,7 +20,7 @@ clean:
 
 %.crc:	%.bin.nocrc
 	cat $^ | edid-decode \
-		| sed -ne 's/^Checksum: 0x\w\+ (should be \(0x\w\+\))$$/\1/p' >$@
+		| sed -ne 's/^[ ]*Checksum: 0x\w\+ (should be \(0x\w\+\))$$/\1/p' >$@
 
 %.p:	%.crc %.S
 	cc -c -DCRC="$$(cat $*.crc)" -o $@ $*.S
