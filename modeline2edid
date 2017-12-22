@@ -59,10 +59,9 @@ template-S() {
 
 	case $ratio in
 	compute)
-		# 16:9 is the default here if it can't find one that matches nicely.
-		ratio=$(find-supported-ratio $hdisp $vdisp 'ERROR')
+		ratio=$(find-supported-ratio $hdisp $vdisp 'UNKNOWN')
 		printf 'Computed ratio: %s' $ratio
-		[[ $ratio != 'ERROR' ]] || return 1
+		[[ $ratio != 'UNKNOWN' ]] || return 1
 		;;
 	esac
 
