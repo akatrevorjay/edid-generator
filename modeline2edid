@@ -1,12 +1,33 @@
 #!/bin/zsh
 emulate -L zsh
+zmodload zsh/mathfunc
 
 setopt errexit errreturn
 #setopt xtrace
 
+
+find-supported-ratio() {
+	local x=$1 y=$2 default=$3; shift 3
+	[ $# -gt 0 ] || set -- 16:10 16:9 4:3 5:4  # supported already in edid.S
+
+	local -A vals=()
+	local r
+	for r in "$@"; do
+		local -i rx=${r%%:*} ry=${r#*:}
+		local v=$(( abs( $x / $rx - $y / $ry ) ))
+		vals[$v]=$r
+	done
+
+	local best=${vals[0]}
+	[[ -n $best ]] || best=$default
+
+	echo $best
+}
+
+
 template-S() {
 	[[ ${(L)1} = mode(|line) ]] || return 1
-	echo "-- Found naughty unicorn: $@"
+	echo "-- Found modeline: $@"
 	shift 1
 
 	local name="${1//\"}"
@@ -21,7 +42,7 @@ template-S() {
 	local -i vdisp="$1" vsyncstart="$2" vsyncend="$3" vtotal="$4"; shift 4
 
 	local -i hsync_polarity=0 vsync_polarity=0 dpi=96 vfreq_hz=60
-	local edid_version="1.3" ratio="16:9"  # TODO calc ratio
+	local edid_version="1.3" ratio="compute"
 
 	local arg
 	for arg in "$@"; do
@@ -36,32 +57,44 @@ template-S() {
 		esac
 	done
 
+	case $ratio in
+	compute)
+		# 16:9 is the default here if it can't find one that matches nicely.
+		ratio=$(find-supported-ratio $hdisp $vdisp 'ERROR')
+		printf 'Computed ratio: %s' $ratio
+		[[ $ratio != 'ERROR' ]] || return 1
+		;;
+	esac
+
 	local -A defines
 	defines=(
+		TIMING_NAME "${(qqq)name}"
+
+		CLOCK	"$pixel_clock_khz"
+		XPIX	"$hdisp"
+		XBLANK	"$((htotal - hdisp))"
+		XOFFSET "$((hsyncstart - hdisp))"
+		XPULSE	"$((hsyncend - hsyncstart))"
+
+		YPIX	"$vdisp"
+		YBLANK	"$((vtotal - vdisp))"
+		YOFFSET "(63+$((vsyncstart - vdisp)))"
+		YPULSE	"(63+$((vsyncend - vsyncstart)))"
+
 		VERSION "${edid_version%%.*}"
 		REVISION "${edid_version#*.}"
-		CLOCK   "$pixel_clock_khz"
-		XPIX    "$hdisp"
-		YPIX    "$vdisp"
+
 		XY_RATIO "XY_RATIO_${(U)ratio//:/_}"
-		XBLANK  "$((htotal - hdisp))"
-		YBLANK  "$((vtotal - vdisp))"
-		XOFFSET "$((hsyncstart - hdisp))"
-		XPULSE  "$((hsyncend - hsyncstart))"
-		YOFFSET "(63+$((vsyncstart - vdisp)))"
-		YPULSE  "(63+$((vsyncend - vsyncstart)))"
 		DPI "$dpi"
 		VFREQ "$vfreq_hz"
-                TIMING_NAME "${(qqq)name}"
 		HSYNC_POL "$hsync_polarity"
 		VSYNC_POL "$vsync_polarity"
 	)
 
-        local lines=('/* '"$name: $REPLY"' */') # removed -a option
+	local -a lines=('/* '"$name: $REPLY"' */')
 	local k
-	for k in "${(@k)defines}"; do
+	for k in ${(k)defines}; do
 		lines+=("#define $k ${defines[$k]}")
-
 	done
 	lines+=('#include "edid.S"')
 
@@ -75,7 +108,7 @@ local f=${1:-'-'}
 if [[ -z "$f" || "$f" == "-h" ]]; then
 	self=${0:t}
 	cat >&2 <<-EOF
-	Modeline2EDID, version forever 0.0.1
+	${0:t}, version forever 0.0.1
 	Help:
 	  $self -h
 	Parse modelines from stdin:
@@ -87,7 +120,7 @@ if [[ -z "$f" || "$f" == "-h" ]]; then
 	exit 1
 fi
 
-echo "Searching for runaway unicorns in '$f'"
+echo "Searching for modelines in '$f'"
 while read; do
 	# trim
 	REPLY=($=REPLY)

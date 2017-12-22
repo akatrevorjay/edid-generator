@@ -12,7 +12,7 @@
 #define REVISION 3
 #define XOFFSET 48
 #define YOFFSET (63+3)
-#define XY_RATIO XY_RATIO_16_9
+#define XY_RATIO XY_RATIO_16_10
 #define YBLANK 52
 #define XBLANK 160
 #define TIMING_NAME "2880x1800"
