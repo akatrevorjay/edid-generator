@@ -30,7 +30,7 @@ clean:
 
 %.bin.ihex:	%.p
 	objcopy -Oihex $^ $@
-	dos2unix $@ 2>/dev/null
+	dos2unix --quiet $@
 
 %.c:	%.bin
 	@echo "{" >$@; hexdump -f hex $^ >>$@; echo "};" >>$@
