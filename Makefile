@@ -1,5 +1,5 @@
 
-SOURCES	:= $(wildcard [0-9]*x[0-9]*.S)
+SOURCES	:= $(filter-out edid.S, $(wildcard *.S))
 
 BIN	:= $(patsubst %.S, %.bin, $(SOURCES))
 
