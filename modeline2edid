@@ -32,6 +32,7 @@ template-S() {
 
 	local name="${1//\"}"
 	[[ -z "$name" ]] && echo "Could not parse modeline: $@" >&2 && return 1
+	[[ "${#name}" -gt 12 ]] && echo "Name cannot be longer than 12 characters: $name is ${#name} characters long" >&2 && return 1
 	local fn="${name}.S"
 
 	local -F pixel_clock_mhz=$2
@@ -47,8 +48,8 @@ template-S() {
 	local arg
 	for arg in "$@"; do
 		case "${(L)arg}" in
-			[-+]hsync) [[ "${arg:1:1}" == "-" ]] || hsync_polarity=1 ;;
-			[-+]vsync) [[ "${arg:1:1}" == "-" ]] || vsync_polarity=1 ;;
+			[-+]hsync) [[ "${arg:0:1}" == "-" ]] || hsync_polarity=1 ;;
+			[-+]vsync) [[ "${arg:0:1}" == "-" ]] || vsync_polarity=1 ;;
 			ratio=*|xy_ratio=*) ratio="${arg#*=}" ;;
 			dpi=*) dpi="${arg#*=}" ;;
 			edid_version=*) edid_version="${arg#*=}" ;;
@@ -60,7 +61,7 @@ template-S() {
 	case $ratio in
 	compute)
 		ratio=$(find-supported-ratio $hdisp $vdisp 'UNKNOWN')
-		printf 'Computed ratio: %s' $ratio
+		printf 'Computed ratio: %s\n' $ratio
 		[[ $ratio != 'UNKNOWN' ]] || return 1
 		;;
 	esac
