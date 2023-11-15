@@ -121,9 +121,13 @@ if [[ -z "$f" || "$f" == "-h" ]]; then
 fi
 
 echo "Searching for modelines in '$f'"
+retcode=0
 while read; do
 	# trim
 	REPLY=($=REPLY)
 	[[ -n "$REPLY" ]] || continue
-	template-S ${(@)REPLY} || :
+	if ! template-S ${(@)REPLY} ; then
+		retcode=1
+	fi
 done < $f
+exit $retcode
