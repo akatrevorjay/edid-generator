@@ -1,0 +1,66 @@
+/* 3840x2160: Modeline "3840x2160" 594.00 3840 4016 4104 4400 2160 2168 2178 2250 +hsync +vsync */
+#include "edid.h"
+
+BEGIN(
+	1, 3,		// version
+	'L', 'N', 'X',	// Manufacturer (3char)
+	2012, 5,	// mfg year, week
+	0, 0 		// PROD ID, Serial
+);
+
+VIDEO_ANALOG(VIDEO_ANALOG_COMP_SYNC);
+MAX_SIZE(3840, 2160, 96);
+
+GAMMA(120);
+DSP(DSP_STANDBY|DSP_ACTIVEOFF|DSP_SUSPEND|DSP_PREFER_DT1|DSP_RGB_COLOR);
+
+LSB_RED_GREEN	(1, 1, 3, 2);
+LSB_BLUE_WHITE	(3, 0, 0, 0);
+MSB_RED		(0xa4, 0x59);
+MSB_GREEN	(0x4a, 0x98);
+MSB_BLUE	(0x25, 0x20);
+MSB_WHITE	(0x50, 0x54);
+
+EST_TIMING(0, 0, 0, 0, 0, 0, 0, 0);
+EST_TIMING(0, 0, 0, 0, 0, 0, 0, 0);
+EST_TIMING(0, 0, 0, 0, 0, 0, 0, 0);
+
+STD_RES_RATIO(1920, XY_RATIO_16_9, 120);
+STD_RES_RATIO(1280, XY_RATIO_16_9, 60);
+STD_RES_RATIO(1600, XY_RATIO_16_9, 60);
+STD_RES_PAD();
+STD_RES_PAD();
+STD_RES_PAD();
+STD_RES_PAD();
+STD_RES_PAD();
+
+DSC_DTD(594000, 96,
+	DTD_SYNC_TYPE(1, 1) | DTD_SYNC_DIR(1, 1),
+	3840,	2160,
+	176,	71,
+	88,	73,
+	560,	90,
+	0,	0);
+
+DSC_DTD(113120, 155,
+	DTD_SYNC_TYPE(1, 1) | DTD_SYNC_DIR(0, 1),
+	1920,	1080,
+	48,	66,
+	32,	69,
+	222,	20,
+	0,	0);
+DSC_DTD(118250, 129,
+	DTD_SYNC_TYPE(1, 1) | DTD_SYNC_DIR(1, 0),
+	1600,	900,
+	96,	66,
+	160,	68,
+	512,	34,
+	0,	0);
+DSC_SERIAL("Linux #0");
+
+EXTENSIONS(0);
+END();
+
+#include "edid.h" // validate presence of all required symbols
+
+// vim: ft=c:ts=8
