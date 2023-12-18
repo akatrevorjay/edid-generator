@@ -20,13 +20,94 @@
 
 
 /* Manufacturer */
-#define MFG_LNX1 'L'
-#define MFG_LNX2 'N'
-#define MFG_LNX3 'X'
-#define SERIAL 0
-#define YEAR 2012
-#define WEEK 5
+#ifndef MFG1
+#define MFG1 'L'
+#endif
+#ifndef MFG2
+#define MFG2 'N'
+#endif
+#ifndef MFG3
+#define MFG3 'X'
+#endif
 
+#ifndef SERIAL
+#define SERIAL 0
+#endif
+
+#ifndef YEAR
+#define YEAR 2012
+#endif
+
+#ifndef WEEK
+#define WEEK 5
+#endif
+
+#ifndef PROD
+#define PROD 0
+#endif
+
+#ifndef DSP
+#define DSP 0xea
+#endif
+
+#ifndef VIDMOD
+#define VIDMOD 0x6d
+#endif
+
+#ifndef RED_GREEN
+#define RED_GREEN 0x5e
+#endif
+
+#ifndef BLU_WHITE
+#define BLU_WHITE 0xc0
+#endif
+
+#ifndef RED_XY
+#define RED_XY 0xa4,0x59
+#endif
+
+#ifndef GRN_XY
+#define GRN_XY 0x4a,0x98
+#endif
+
+#ifndef BLU_XY
+#define BLU_XY 0x25,0x20
+#endif
+
+#ifndef WHT_XY
+#define WHT_XY 0x50,0x54
+#endif
+
+#ifndef DSC2_TYPE
+#define DSC2_TYPE 0xff
+#define DSC2_DATA .ascii	"Linux #0"
+#elif ! defined(DSC2_DATA)
+#error "DSC2_DATA" not defined
+#endif
+
+#ifndef DSC3_TYPE
+#define DSC3_TYPE 0xff
+#define DSC3_DATA \
+	.byte	VFREQ-1;	/* Minimum vertical field rate (1-255 Hz) */ \
+	.byte	VFREQ+1;	/* Maximum vertical field rate (1-255 Hz) */ \
+	.byte	(CLOCK/(XPIX+XBLANK))-1; \
+			/* Minimum horizontal line rate (1-255 kHz) */ \
+	.byte	(CLOCK/(XPIX+XBLANK))+1; \
+			/* Maximum horizontal line rate (1-255 kHz) */ \
+	.byte	(CLOCK/10000)+1; \
+			/* Maximum pixel clock rate, rounded up \
+			to 10 MHz multiple (10-2550 MHz) */ \
+	.byte	0; /* No extended timing information type */
+#elif ! defined(DSC3_DATA)
+#error "DSC3_DATA" not defined
+#endif
+
+#ifndef DSC4_TYPE
+#define DSC4_TYPE 0xfc
+#define DSC4_DATA .ascii TIMING_NAME
+#elif ! defined(DSC4_DATA)
+#error "DSC4_DATA" not defined
+#endif
 /* EDID 1.3 standard definitions */
 #define XY_RATIO_16_10	0b00
 #define XY_RATIO_4_3	0b01
@@ -59,9 +140,9 @@
 /* Fixed header pattern */
 header:		.byte	0x00,0xff,0xff,0xff,0xff,0xff,0xff,0x00
 
-mfg_id:		.hword	swap16(mfgname2id(MFG_LNX1, MFG_LNX2, MFG_LNX3))
+mfg_id:		.hword	swap16(mfgname2id(MFG1, MFG2, MFG3))
 
-prod_code:	.hword	0
+prod_code:	.hword	PROD
 
 /* Serial number. 32 bits, little endian. */
 serial_number:	.long	SERIAL
@@ -90,7 +171,7 @@ revision:	.byte	REVISION	/* EDID revision, usually 3 (for 1.3) */
    Bit 1	Sync on green supported
    Bit 0	VSync pulse must be serrated when somposite or
 		  sync-on-green is used. */
-video_parms:	.byte	0x6d
+video_parms:	.byte	VIDMOD
 
 /* Maximum horizontal image size, in centimetres
    (max 292 cm/115 in at 16:9 aspect ratio) */
@@ -112,7 +193,7 @@ gamma:		.byte	120
 		  sRGB standard values.
    Bit 1	Preferred timing mode specified in descriptor block 1.
    Bit 0	GTF supported with default parameter values. */
-dsp_features:	.byte	0xea
+dsp_features:	.byte	DSP
 
 /* Chromaticity coordinates. */
 /* Red and green least-significant bits
@@ -120,26 +201,23 @@ dsp_features:	.byte	0xea
    Bits 5-4	Red y value least-significant 2 bits
    Bits 3-2	Green x value lst-significant 2 bits
    Bits 1-0	Green y value least-significant 2 bits */
-red_green_lsb:	.byte	0x5e
+red_green_lsb:	.byte	RED_GREEN
 
 /* Blue and white least-significant 2 bits */
-blue_white_lsb:	.byte	0xc0
+blue_white_lsb:	.byte	BLU_WHITE
 
 /* Red x value most significant 8 bits.
    0-255 encodes 0-0.996 (255/256); 0-0.999 (1023/1024) with lsbits */
-red_x_msb:	.byte	0xa4
-
-/* Red y value most significant 8 bits */
-red_y_msb:	.byte	0x59
+red_x_y_msb:	.byte	RED_XY
 
 /* Green x and y value most significant 8 bits */
-green_x_y_msb:	.byte	0x4a,0x98
+green_x_y_msb:	.byte	GRN_XY
 
 /* Blue x and y value most significant 8 bits */
-blue_x_y_msb:	.byte	0x25,0x20
+blue_x_y_msb:	.byte	BLU_XY
 
 /* Default white point x and y value most significant 8 bits */
-white_x_y_msb:	.byte	0x50,0x54
+white_x_y_msb:	.byte	WHT_XY
 
 /* Established timings */
 /* Bit 7	720x400 @ 70 Hz
@@ -166,6 +244,10 @@ estbl_timing2:	.byte	ESTABLISHED_TIMING2_BITS
    Bits 6-0 	Other manufacturer-specific display mod */
 estbl_timing3:	.byte	ESTABLISHED_TIMING3_BITS
 
+#ifdef NO_STI
+/* Standard timing: none */
+.fill	8,2,0x0101	/* Unused */
+#else
 /* Standard timing */
 /* X resolution, less 31, divided by 8 (256-2288 pixels) */
 std_xres:	.byte	(XPIX/8)-31
@@ -174,6 +256,7 @@ std_xres:	.byte	(XPIX/8)-31
    Bits 5-0	Vertical frequency, less 60 (60-123 Hz) */
 std_vres:	.byte	(XY_RATIO<<6)+VFREQ-60
 		.fill	7,2,0x0101	/* Unused */
+#endif
 
 descriptor1:
 /* Pixel clock in 10 kHz units. (0.-655.35 MHz, little-endian) */
@@ -238,34 +321,35 @@ y_border:	.byte	0
    Digital: HSync polarity (1=positive)
    Bit 0 	2-way line-interleaved stereo, if bits 4-3 are not 00. */
 features:	.byte	0x18+(VSYNC_POL<<2)+(HSYNC_POL<<1)
-
+#ifndef DSC2_DISABLE
 descriptor2:	.byte	0,0	/* Not a detailed timing descriptor */
 		.byte	0	/* Must be zero */
-		.byte	0xff	/* Descriptor is monitor serial number (text) */
+		.byte	DSC2_TYPE	/* Descriptor is monitor serial number (text) */
 		.byte	0	/* Must be zero */
-start1:		.ascii	"Linux #0"
+start1:		DSC2_DATA
 end1:		.byte	0x0a	/* End marker */
 		.fill	12-(end1-start1), 1, 0x20 /* Padded spaces */
+#else
+	.byte	0
+	.byte	0
+	.byte   0
+	.byte	0x10
+	.fill	12,1,0x01
+	.byte 0x0a
+	.byte 0x20
+#endif
 descriptor3:	.byte	0,0	/* Not a detailed timing descriptor */
 		.byte	0	/* Must be zero */
-		.byte	0xfd	/* Descriptor is monitor range limits */
+		.byte	DSC3_TYPE	/* Descriptor is monitor range limits */
 		.byte	0	/* Must be zero */
-start2:		.byte	VFREQ-1	/* Minimum vertical field rate (1-255 Hz) */
-		.byte	VFREQ+1	/* Maximum vertical field rate (1-255 Hz) */
-		.byte	(CLOCK/(XPIX+XBLANK))-1 /* Minimum horizontal line rate
-						    (1-255 kHz) */
-		.byte	(CLOCK/(XPIX+XBLANK))+1 /* Maximum horizontal line rate
-						    (1-255 kHz) */
-		.byte	(CLOCK/10000)+1	/* Maximum pixel clock rate, rounded up
-					   to 10 MHz multiple (10-2550 MHz) */
-		.byte	0	/* No extended timing information type */
+start2:	DSC3_DATA
 end2:		.byte	0x0a	/* End marker */
 		.fill	12-(end2-start2), 1, 0x20 /* Padded spaces */
 descriptor4:	.byte	0,0	/* Not a detailed timing descriptor */
 		.byte	0	/* Must be zero */
-		.byte	0xfc	/* Descriptor is text */
+		.byte	DSC4_TYPE	/* Descriptor is text */
 		.byte	0	/* Must be zero */
-start3:		.ascii	TIMING_NAME
+start3:		DSC4_DATA
 end3:		.byte	0x0a	/* End marker */
 		.fill	12-(end3-start3), 1, 0x20 /* Padded spaces */
 extensions:	.byte	0	/* Number of extensions to follow */
