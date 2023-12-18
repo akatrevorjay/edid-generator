@@ -321,7 +321,7 @@ y_border:	.byte	0
    Digital: HSync polarity (1=positive)
    Bit 0 	2-way line-interleaved stereo, if bits 4-3 are not 00. */
 features:	.byte	0x18+(VSYNC_POL<<2)+(HSYNC_POL<<1)
-
+#ifndef DSC2_DISABLE
 descriptor2:	.byte	0,0	/* Not a detailed timing descriptor */
 		.byte	0	/* Must be zero */
 		.byte	DSC2_TYPE	/* Descriptor is monitor serial number (text) */
@@ -329,6 +329,15 @@ descriptor2:	.byte	0,0	/* Not a detailed timing descriptor */
 start1:		DSC2_DATA
 end1:		.byte	0x0a	/* End marker */
 		.fill	12-(end1-start1), 1, 0x20 /* Padded spaces */
+#else
+	.byte	0
+	.byte	0
+	.byte   0
+	.byte	0x10
+	.fill	12,1,0x01
+	.byte 0x0a
+	.byte 0x20
+#endif
 descriptor3:	.byte	0,0	/* Not a detailed timing descriptor */
 		.byte	0	/* Must be zero */
 		.byte	DSC3_TYPE	/* Descriptor is monitor range limits */
